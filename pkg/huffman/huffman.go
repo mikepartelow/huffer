@@ -3,9 +3,10 @@ package huffman
 import (
 	"mp/huffer/pkg/counter"
 	"mp/huffer/pkg/pq"
+	"slices"
 )
 
-func Encode[T comparable](s []T) []byte {
+func Encode(s []rune) []byte {
 	return nil
 }
 
@@ -14,47 +15,53 @@ type Code struct {
 	Value int
 }
 
-type Table[T comparable] map[T]Code
+type Table map[rune]Code
 
-func MakeTable[T comparable](s []T) Table[T] {
-	counts := counter.Counts[T](s)
+func MakeTable(s []rune) Table {
+	counts := counter.Counts[rune](s)
 
-	q := pq.New[node[T]]()
+	var counted_runes []rune
+	for r := range counts {
+		counted_runes = append(counted_runes, r)
+	}
+	slices.Sort(counted_runes)
 
-	for r, count := range counts {
-		q.Push(pq.Item[node[T]]{
-			Value:    node[T]{R: r},
-			Priority: count,
+	q := pq.New[node]()
+
+	for _, r := range counted_runes {
+		q.Push(pq.Item[node]{
+			Value:    node{R: r},
+			Priority: counts[r],
 		})
 	}
 
 	for q.Len() > 1 {
 		a, b := q.Pop(), q.Pop()
-		n := node[T]{
+		n := node{
 			Left:  &a.Value,
 			Right: &b.Value,
 		}
-		q.Push(pq.Item[node[T]]{
+		q.Push(pq.Item[node]{
 			Value:    n,
 			Priority: a.Priority + b.Priority,
 		})
 	}
 
 	root := q.Pop()
-	table := make(Table[T])
+	table := make(Table)
 
 	traverse(root.Value, 0, 0, table)
 
 	return table
 }
 
-type node[T comparable] struct {
-	R     T
-	Left  *node[T]
-	Right *node[T]
+type node struct {
+	R     rune
+	Left  *node
+	Right *node
 }
 
-func traverse[T comparable](n node[T], value, len int, table Table[T]) {
+func traverse(n node, value, len int, table Table) {
 	if n.Left == nil && n.Right == nil {
 		table[n.R] = Code{Value: value, Len: len}
 		return
