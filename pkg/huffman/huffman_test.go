@@ -34,24 +34,24 @@ func TestMakeTable(t *testing.T) {
 	}
 }
 
-// func TestEncode(t *testing.T) {
-// 	testCases := []struct {
-// 		given []rune
-// 		want  []byte
-// 	}{
-// 		{
-// 			given: []rune("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"),
-// 			want: []byte{
-// 				0x87,
-// 				// and so on
-// 			},
-// 			// want: // 0b1000011101001000110010011101100111001001000111110010011111011111100010001111110100111001001011111011101000111111001
-// 		},
-// 	}
-// 	for _, tC := range testCases {
-// 		t.Run(string(tC.given), func(t *testing.T) {
-// 			got := huffman.Encode(tC.given)
-// 			assert.Equal(t, tC.want, got)
-// 		})
-// 	}
-// }
+func TestEncode(t *testing.T) {
+	testCases := []struct {
+		given []rune
+		want  []byte
+	}{
+		{
+			given: []rune("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"),
+			want: []byte{
+				0x87,
+				// and so on
+			},
+			// want: // 0b1000011101001000110010011101100111001001000111110010011111011111100010001111110100111001001011111011101000111111001
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(string(tC.given), func(t *testing.T) {
+			got, _ := huffman.Encode(tC.given)
+			assert.Equal(t, tC.want, got)
+		})
+	}
+}

@@ -1,18 +1,41 @@
 package huffman
 
 import (
+	"bytes"
 	"mp/huffer/pkg/counter"
 	"mp/huffer/pkg/pq"
 	"slices"
 )
 
-func Encode(s []rune) []byte {
-	return nil
+func Encode(s []rune) ([]byte, Table) {
+	var buf bytes.Buffer
+
+	table := MakeTable(s)
+
+	// var b uint32
+	// var l int
+
+	// for _, r := range s {
+	// 	code := table[r]
+
+	// 	b = (b << code.Len) | code.Value
+	// 	must(buf.WriteByte(byte(b & 0xff)))
+	// 	must(buf.WriteByte(byte(b & 0xff << 2)))
+	// 	must(buf.WriteByte(byte(b & 0xff << 4)))
+	// 	must(buf.WriteByte(byte(b & 0xff << 6)))
+
+	// 	err := buf.WriteByte(b)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+
+	return buf.Bytes(), table
 }
 
 type Code struct {
 	Len   int
-	Value int
+	Value uint32
 }
 
 type Table map[rune]Code
@@ -20,6 +43,7 @@ type Table map[rune]Code
 func MakeTable(s []rune) Table {
 	counts := counter.Counts[rune](s)
 
+	// sort the counts by rune so that we make the same table each time
 	var counted_runes []rune
 	for r := range counts {
 		counted_runes = append(counted_runes, r)
@@ -61,7 +85,7 @@ type node struct {
 	Right *node
 }
 
-func traverse(n node, value, len int, table Table) {
+func traverse(n node, value uint32, len int, table Table) {
 	if n.Left == nil && n.Right == nil {
 		table[n.R] = Code{Value: value, Len: len}
 		return
@@ -71,5 +95,11 @@ func traverse(n node, value, len int, table Table) {
 	}
 	if n.Right != nil {
 		traverse(*n.Right, value<<1|0b1, len+1, table)
+	}
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
 	}
 }
