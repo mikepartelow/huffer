@@ -1,6 +1,8 @@
 package bitstream
 
-import "bytes"
+import (
+	"bytes"
+)
 
 type Buffer struct {
 	b   byte

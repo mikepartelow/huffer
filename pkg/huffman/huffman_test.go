@@ -42,12 +42,13 @@ func TestEncode(t *testing.T) {
 		{
 			given: []rune("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"),
 			want: []byte{
-				0x87,
-				// and so on
+				// this encoding is different from the one on wikipedia because huffman codes are not unique, particularly in the case of a "tie"
+				// in frequency counts, which this example has.
+				0b10010011, 0b01000010, 0b01000011, 0b11011000, 0b11000011, 0b00111111, 0b00001111, 0b11011111, 0b10011001, 0b11111101, 0b00011000, 0b01101111, 0b10111010, 0b01111111, 0b00000000,
 			},
-			// want: // 0b1000011101001000110010011101100111001001000111110010011111011111100010001111110100111001001011111011101000111111001
 		},
 	}
+
 	for _, tC := range testCases {
 		t.Run(string(tC.given), func(t *testing.T) {
 			got, _ := huffman.Encode(tC.given)
