@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBitstream(t *testing.T) {
+func TestWrite(t *testing.T) {
 	testCases := []struct {
 		given []int
 		want  []byte
@@ -44,6 +44,44 @@ func TestBitstream(t *testing.T) {
 			}
 			got := bs.Bytes()
 			assert.Equal(t, tC.want, got)
+		})
+	}
+}
+
+func TestRead(t *testing.T) {
+	testCases := []struct {
+		given []byte
+		want  []int
+	}{
+		{
+			given: []byte{0},
+			want:  []int{0},
+		},
+		{
+			given: []byte{0b10000000},
+			want:  []int{0b1},
+		},
+		{
+			given: []byte{0b10000000},
+			want:  []int{0b1, 0b0},
+		},
+		{
+			given: []byte{0b10101010},
+			want:  []int{0b1, 0b0, 0b1, 0b0, 0b1, 0b0, 0b1, 0b0},
+		},
+		{
+			given: []byte{0b10101010, 0b10000000},
+			want:  []int{0b1, 0b0, 0b1, 0b0, 0b1, 0b0, 0b1, 0b0, 0b1},
+		},
+	}
+	for i, tC := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			buf := bitstream.NewBuffer(tC.given)
+			for _, want := range tC.want {
+				got, err := buf.Read()
+				assert.NoError(t, err)
+				assert.Equal(t, want, got)
+			}
 		})
 	}
 }

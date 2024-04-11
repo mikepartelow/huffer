@@ -1,6 +1,7 @@
 package huffman
 
 import (
+	"fmt"
 	"mp/huffer/pkg/bitstream"
 	"mp/huffer/pkg/counter"
 	"mp/huffer/pkg/pq"
@@ -27,9 +28,48 @@ func Encode(s []rune) ([]byte, Table) {
 	return buf.Bytes(), table
 }
 
+func Decode(s []byte, len int, table Table) ([]rune, error) {
+	var runes []rune
+
+	rtable := make(map[Encoding]rune)
+	for r, c := range table {
+		rtable[c.Value] = r
+		fmt.Printf(" 0b%b = %c", c.Value, r)
+	}
+	fmt.Println("")
+
+	for _, b := range s {
+		fmt.Println("++", b)
+
+		var code Encoding
+
+		for i := uint32(0); ; i++ {
+
+			if i == 8 {
+				return nil, fmt.Errorf("could not decode input")
+			}
+			bit := (Encoding(b) << Encoding(i)) & (1 << Encoding(i))
+			fmt.Printf("0b%b :: 0b%b :: 0b%b\n", Encoding(i), code, bit)
+
+			code <<= 1
+			code |= bit
+			r, ok := rtable[code]
+			if ok {
+				runes = append(runes, r)
+				fmt.Printf("-> %c\n", r)
+				break
+			}
+		}
+	}
+
+	return runes, nil
+}
+
+type Encoding uint32
+
 type Code struct {
 	Len   int
-	Value uint32
+	Value Encoding
 }
 
 type Table map[rune]Code
@@ -79,7 +119,7 @@ type node struct {
 	Right *node
 }
 
-func traverse(n node, value uint32, len int, table Table) {
+func traverse(n node, value Encoding, len int, table Table) {
 	if n.Left == nil && n.Right == nil {
 		table[n.R] = Code{Value: value, Len: len}
 		return

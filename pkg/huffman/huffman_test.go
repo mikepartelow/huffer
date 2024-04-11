@@ -56,3 +56,34 @@ func TestEncode(t *testing.T) {
 		})
 	}
 }
+
+func TestDecode(t *testing.T) {
+	testCases := []struct {
+		given []byte
+		table huffman.Table
+		want  []rune
+	}{
+		{
+			given: []byte{
+				0b10010011, 0b01000010, 0b01000011, 0b11011000, 0b11000011, 0b00111111, 0b00001111, 0b11011111, 0b10011001, 0b11111101, 0b00011000, 0b01101111, 0b10111010, 0b01111111, 0b00000000,
+			},
+			table: huffman.Table{
+				'D': huffman.Code{Len: 2, Value: 0b00},
+				'_': huffman.Code{Len: 2, Value: 0b01},
+				'A': huffman.Code{Len: 2, Value: 0b10},
+				'E': huffman.Code{Len: 3, Value: 0b110},
+				'C': huffman.Code{Len: 4, Value: 0b1110},
+				'B': huffman.Code{Len: 4, Value: 0b1111},
+			},
+			want: []rune("A_DEAD_DAD_CEDED_A_BAD_BABE_A_BEADED_ABACA_BED"),
+		},
+	}
+
+	for _, tC := range testCases {
+		t.Run(string(tC.given), func(t *testing.T) {
+			got, err := huffman.Decode(tC.given, len(tC.want), tC.table)
+			assert.NoError(t, err)
+			assert.Equal(t, tC.want, got)
+		})
+	}
+}

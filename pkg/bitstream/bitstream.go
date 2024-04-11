@@ -2,12 +2,49 @@ package bitstream
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"math/bits"
 )
+
+// TODO: read buffer should be a different type from write buffer, since we can't read and write from the same one
+//	in fact, use io.Reader and io.Writer
 
 type Buffer struct {
 	b   byte
 	l   int
 	buf bytes.Buffer
+}
+
+func NewBuffer(s []byte) *Buffer {
+	return &Buffer{
+		buf: *bytes.NewBuffer(s),
+	}
+}
+
+// Read reads a bit from the buffer, and returns io.EOF if the buffer is empty
+func (b *Buffer) Read() (int, error) {
+	if b.l == 0 {
+		var err error
+		b.b, err = b.buf.ReadByte()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return 0, io.EOF
+			}
+			return 0, fmt.Errorf("error reading byte: %w", err)
+		}
+		b.b = bits.Reverse8(b.b)
+	}
+
+	bit := int((b.b >> b.l) & 1)
+
+	if b.l++; b.l == 8 {
+		b.l = 0
+	}
+
+	return bit, nil
+
 }
 
 // Write writes a bit to the Buffer. Only the least significant bit of "bit" is used.
