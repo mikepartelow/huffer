@@ -15,9 +15,8 @@ func Encode(s []rune) ([]byte, Table) {
 
 	for _, r := range s {
 		code := table[r]
-		for i := range code.Len {
-			bit := (int(code.Value) >> (code.Len - i - 1)) & 1
-
+		for i := range code.Width {
+			bit := (int(code.Value) >> (code.Width - i - 1)) & 1
 			err := buf.Write(bit)
 			if err != nil {
 				panic(err)
@@ -28,37 +27,29 @@ func Encode(s []rune) ([]byte, Table) {
 	return buf.Bytes(), table
 }
 
-func Decode(s []byte, len int, table Table) ([]rune, error) {
+func Decode(s []byte, length int, table Table) ([]rune, error) {
 	var runes []rune
 
-	rtable := make(map[Encoding]rune)
+	rtable := make(map[Code]rune)
 	for r, c := range table {
-		rtable[c.Value] = r
-		fmt.Printf(" 0b%b = %c", c.Value, r)
+		rtable[c] = r
 	}
-	fmt.Println("")
 
-	for _, b := range s {
-		fmt.Println("++", b)
+	buf := bitstream.NewBuffer(s)
 
-		var code Encoding
+	var e Encoding
 
-		for i := uint32(0); ; i++ {
+	for w := 1; len(runes) < length; w++ {
+		bit, err := buf.Read()
+		if err != nil {
+			return nil, fmt.Errorf("error decoding")
+		}
 
-			if i == 8 {
-				return nil, fmt.Errorf("could not decode input")
-			}
-			bit := (Encoding(b) << Encoding(i)) & (1 << Encoding(i))
-			fmt.Printf("0b%b :: 0b%b :: 0b%b\n", Encoding(i), code, bit)
+		e = (e << 1) | Encoding(bit)
 
-			code <<= 1
-			code |= bit
-			r, ok := rtable[code]
-			if ok {
-				runes = append(runes, r)
-				fmt.Printf("-> %c\n", r)
-				break
-			}
+		if r, ok := rtable[Code{Width: w, Value: e}]; ok {
+			runes = append(runes, r)
+			e, w = 0, 0
 		}
 	}
 
@@ -68,7 +59,7 @@ func Decode(s []byte, len int, table Table) ([]rune, error) {
 type Encoding uint32
 
 type Code struct {
-	Len   int
+	Width int
 	Value Encoding
 }
 
@@ -121,7 +112,7 @@ type node struct {
 
 func traverse(n node, value Encoding, len int, table Table) {
 	if n.Left == nil && n.Right == nil {
-		table[n.R] = Code{Value: value, Len: len}
+		table[n.R] = Code{Value: value, Width: len}
 		return
 	}
 	if n.Left != nil {
